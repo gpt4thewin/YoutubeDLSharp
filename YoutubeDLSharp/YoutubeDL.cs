@@ -77,7 +77,7 @@ namespace YoutubeDLSharp
         /// </summary>
         /// <param name="count"></param>
         /// <returns></returns>
-        public async Task SetMaxNumberOfProcesses(byte count) => await runner.SetTotalCount(count);
+        public void SetMaxNumberOfProcesses(byte count) => runner.SetTotalCount(count).Wait();
 
         #region Process methods
 
@@ -88,12 +88,12 @@ namespace YoutubeDLSharp
         /// <param name="options">The OptionSet of yt-dlp options.</param>
         /// <param name="ct">A CancellationToken used to cancel the process.</param>
         /// <returns>A RunResult object containing the output of yt-dlp as an array of string.</returns>
-        public async Task<RunResult<string[]>> RunWithOptions(string[] urls, OptionSet options, CancellationToken ct)
+        public RunResult<string[]> RunWithOptions(string[] urls, OptionSet options, CancellationToken ct)
         {
             var output = new List<string>();
             var process = CreateYoutubeDLProcess();
             process.OutputReceived += (o, e) => output.Add(e.Data);
-            (int code, string[] errors) = await runner.RunThrottled(process, urls, options, ct);
+            (int code, string[] errors) = runner.RunThrottled(process, urls, options, ct);
             return new RunResult<string[]>(code == 0, errors, output.ToArray());
         }
 
@@ -107,7 +107,7 @@ namespace YoutubeDLSharp
         /// <param name="output">A progress provider used to capture the standard output.</param>
         /// <param name="showArgs">When true, outputs full download arguments</param>
         /// <returns>A RunResult object containing the path to the downloaded and converted video.</returns>
-        public async Task<RunResult<string>> RunWithOptions(string url, OptionSet options, CancellationToken ct = default,
+        public RunResult<string> RunWithOptions(string url, OptionSet options, CancellationToken ct = default,
             IProgress<DownloadProgress> progress = null, IProgress<string> output = null, bool showArgs = true)
         {
             string outFile = string.Empty;
@@ -126,7 +126,7 @@ namespace YoutubeDLSharp
                 }
                 output?.Report(e.Data);
             };
-            (int code, string[] errors) = await runner.RunThrottled(process, new[] { url }, options, ct, progress);
+            (int code, string[] errors) = runner.RunThrottled(process, new[] { url }, options, ct, progress);
             return new RunResult<string>(code == 0, errors, outFile);
         }
 
@@ -134,12 +134,12 @@ namespace YoutubeDLSharp
         /// Runs an update of yt-dlp.
         /// </summary>
         /// <returns>The output of yt-dlp as string.</returns>
-        public async Task<string> RunUpdate()
+        public string RunUpdate()
         {
             string output = String.Empty;
             var process = CreateYoutubeDLProcess();
             process.OutputReceived += (o, e) => output = e.Data;
-            await process.RunAsync(null, new OptionSet() { Update = true });
+            process.RunAsync(null, new OptionSet() { Update = true });
             return output;
         }
 
@@ -152,7 +152,7 @@ namespace YoutubeDLSharp
         /// <param name="fetchComments">If set to true, fetch comment data for the given video.</param>
         /// <param name="overrideOptions">Override options of the default option set for this run.</param>
         /// <returns>A RunResult object containing a VideoData object with the requested video information.</returns>
-        public async Task<RunResult<VideoData>> RunVideoDataFetch(string url,
+        public RunResult<VideoData> RunVideoDataFetch(string url,
             CancellationToken ct = default,
             bool flat = true,
             bool fetchComments = false,
@@ -179,7 +179,7 @@ namespace YoutubeDLSharp
                     process.RedirectToError(e);
                 }
             };
-            (int code, string[] errors) = await runner.RunThrottled(process, new[] { url }, opts, ct);
+            (int code, string[] errors) = runner.RunThrottled(process, new[] { url }, opts, ct);
             return new RunResult<VideoData>(code == 0, errors, videoData);
         }
 
@@ -195,7 +195,7 @@ namespace YoutubeDLSharp
         /// <param name="output">A progress provider used to capture the standard output.</param>
         /// <param name="overrideOptions">Override options of the default option set for this run.</param>
         /// <returns>A RunResult object containing the path to the downloaded and converted video.</returns>
-        public async Task<RunResult<string>> RunVideoDownload(string url,
+        public RunResult<string> RunVideoDownload(string url,
             string format = "bestvideo+bestaudio/best",
             DownloadMergeFormat mergeFormat = DownloadMergeFormat.Unspecified,
             VideoRecodeFormat recodeFormat = VideoRecodeFormat.None,
@@ -224,7 +224,7 @@ namespace YoutubeDLSharp
                 }
                 output?.Report(e.Data);
             };
-            (int code, string[] errors) = await runner.RunThrottled(process, new[] { url }, opts, ct, progress);
+            (int code, string[] errors) = runner.RunThrottled(process, new[] { url }, opts, ct, progress);
             return new RunResult<string>(code == 0, errors, outputFile);
         }
 
@@ -242,7 +242,7 @@ namespace YoutubeDLSharp
         /// <param name="output">A progress provider used to capture the standard output.</param>
         /// <param name="overrideOptions">Override options of the default option set for this run.</param>
         /// <returns>A RunResult object containing the paths to the downloaded and converted videos.</returns>
-        public async Task<RunResult<string[]>> RunVideoPlaylistDownload(string url,
+        public RunResult<string[]> RunVideoPlaylistDownload(string url,
             int? start = 1, int? end = null,
             int[] items = null,
             string format = "bestvideo+bestaudio/best",
@@ -277,7 +277,7 @@ namespace YoutubeDLSharp
                 }
                 output?.Report(e.Data);
             };
-            (int code, string[] errors) = await runner.RunThrottled(process, new[] { url }, opts, ct, progress);
+            (int code, string[] errors) = runner.RunThrottled(process, new[] { url }, opts, ct, progress);
             return new RunResult<string[]>(code == 0, errors, outputFiles.ToArray());
         }
 
@@ -291,7 +291,7 @@ namespace YoutubeDLSharp
         /// <param name="output">A progress provider used to capture the standard output.</param>
         /// <param name="overrideOptions">Override options of the default option set for this run.</param>
         /// <returns>A RunResult object containing the path to the downloaded and converted video.</returns>
-        public async Task<RunResult<string>> RunAudioDownload(string url, AudioConversionFormat format = AudioConversionFormat.Best,
+        public RunResult<string> RunAudioDownload(string url, AudioConversionFormat format = AudioConversionFormat.Best,
             CancellationToken ct = default, IProgress<DownloadProgress> progress = null,
             IProgress<string> output = null, OptionSet overrideOptions = null)
         {
@@ -318,7 +318,7 @@ namespace YoutubeDLSharp
                 }
                 output?.Report(e.Data);
             };
-            (int code, string[] errors) = await runner.RunThrottled(process, new[] { url }, opts, ct, progress);
+            (int code, string[] errors) = runner.RunThrottled(process, new[] { url }, opts, ct, progress);
             return new RunResult<string>(code == 0, errors, outputFile);
         }
 
@@ -335,7 +335,7 @@ namespace YoutubeDLSharp
         /// <param name="output">A progress provider used to capture the standard output.</param>
         /// <param name="overrideOptions">Override options of the default option set for this run.</param>
         /// <returns>A RunResult object containing the paths to the downloaded and converted videos.</returns>
-        public async Task<RunResult<string[]>> RunAudioPlaylistDownload(string url,
+        public RunResult<string[]> RunAudioPlaylistDownload(string url,
             int? start = 1, int? end = null,
             int[] items = null, AudioConversionFormat format = AudioConversionFormat.Best,
             CancellationToken ct = default, IProgress<DownloadProgress> progress = null,
@@ -369,7 +369,7 @@ namespace YoutubeDLSharp
                 }
                 output?.Report(e.Data);
             };
-            (int code, string[] errors) = await runner.RunThrottled(process, new[] { url }, opts, ct, progress);
+            (int code, string[] errors) = runner.RunThrottled(process, new[] { url }, opts, ct, progress);
             return new RunResult<string[]>(code == 0, errors, outputFiles.ToArray());
         }
 

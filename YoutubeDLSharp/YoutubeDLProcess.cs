@@ -73,8 +73,8 @@ namespace YoutubeDLSharp
         /// <param name="urls">The video URLs to be passed to yt-dlp.</param>
         /// <param name="options">An OptionSet specifying the options to be passed to yt-dlp.</param>
         /// <returns>The exit code of the yt-dlp process.</returns>
-        public async Task<int> RunAsync(string[] urls, OptionSet options)
-            => await RunAsync(urls, options, CancellationToken.None);
+        public int RunAsync(string[] urls, OptionSet options)
+            => RunAsync(urls, options, CancellationToken.None);
 
         /// <summary>
         /// Invokes yt-dlp with the specified parameters and options.
@@ -84,7 +84,7 @@ namespace YoutubeDLSharp
         /// <param name="ct">A CancellationToken used to cancel the download.</param>
         /// <param name="progress">A progress provider used to get download progress information.</param>
         /// <returns>The exit code of the yt-dlp process.</returns>
-        public async Task<int> RunAsync(string[] urls, OptionSet options,
+        public int RunAsync(string[] urls, OptionSet options,
             CancellationToken ct, IProgress<DownloadProgress> progress = null)
         {
             var tcs = new TaskCompletionSource<int>();
@@ -180,11 +180,11 @@ namespace YoutubeDLSharp
                 progress?.Report(new DownloadProgress(DownloadState.Error, data: e.Data));
                 ErrorReceived?.Invoke(this, e);
             };
-            process.Exited += async (sender, args) =>
+            process.Exited += (sender, args) =>
             {
                 // Wait for output and error streams to finish
-                await tcsOut.Task;
-                await tcsError.Task;
+                tcsOut.Task.Wait();
+                tcsError.Task.Wait();
                 tcs.TrySetResult(process.ExitCode);
                 process.Dispose();
             };
@@ -203,12 +203,12 @@ namespace YoutubeDLSharp
                 catch { }
             });
             Debug.WriteLine("[yt-dlp] Arguments: " + process.StartInfo.Arguments);
-            if (!await Task.Run(() => process.Start()))
+            if (!process.Start())
                 tcs.TrySetException(new InvalidOperationException("Failed to start yt-dlp process."));
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             progress?.Report(new DownloadProgress(DownloadState.PreProcessing));
-            return await tcs.Task;
+            return tcs.Task.Result;
         }
     }
 }

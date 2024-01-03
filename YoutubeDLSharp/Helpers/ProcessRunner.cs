@@ -22,15 +22,15 @@ namespace YoutubeDLSharp.Helpers
             TotalCount = initialCount;
         }
 
-        public async Task<(int, string[])> RunThrottled(YoutubeDLProcess process, string[] urls, OptionSet options,
+        public (int, string[]) RunThrottled(YoutubeDLProcess process, string[] urls, OptionSet options,
                                        CancellationToken ct, IProgress<DownloadProgress> progress = null)
         {
             var errors = new List<string>();
             process.ErrorReceived += (o, e) => errors.Add(e.Data);
-            await semaphore.WaitAsync(ct);
+            //await semaphore.WaitAsync(ct);
             try
             {
-                var exitCode = await process.RunAsync(urls, options, ct, progress);
+                var exitCode = process.RunAsync(urls, options, ct, progress);
                 return (exitCode, errors.ToArray());
             }
             finally
